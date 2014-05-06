@@ -17,9 +17,13 @@ void updateBadge(Event e) {
   setBadgeName(inputName);
   if (inputName.trim().isEmpty) {
     // To do: add some code here.
+    genButton..disabled = false
+             ..text = 'Aye! Gimme a name!';
   }
   else {
     // To do: add some code here.
+    genButton..disabled = true
+             ..text = 'Arrr! Write yer name!';
   }
 }
 
