@@ -4,17 +4,34 @@
 import 'dart:html';
 import 'dart:math' show Random;
 import 'dart:convert' show JSON;
+import 'dart:async' show Future;
 
 ButtonElement genButton;
-
+SpanElement badgeNameElement;
 final String TREASURE_KEY = 'pirateName';
 
 void main() {
   // Your app starts here.
-  querySelector('#inputName').onInput.listen(updateBadge);
+  InputElement inputField = querySelector('#inputName');
+  inputField.onInput.listen(updateBadge);
+  
   genButton = querySelector('#generateButton');
   genButton.onClick.listen(generateBadge);
+  badgeNameElement = querySelector('#badgeName');
+
   setBadgeName(getBadgeNameFromStorage());
+  
+  PirateName.readyThePirates()
+    .then((_) {
+      //on success
+      inputField.disabled = false; //enable
+      genButton.disabled = false;  //enable
+      setBadgeName(getBadgeNameFromStorage());
+    })
+    .catchError((arrr) {
+      print('Error initializing pirate names: $arrr');
+      badgeNameElement.text = 'Arrr! No names.';
+    });
 }
 
 void updateBadge(Event e) {
@@ -59,12 +76,8 @@ class PirateName {
   String _firstName;
   String _appellation;
   
-  static final List names = [
-    'Anne', 'Mary', 'Jack', 'Morgan', 'Roger',
-    'Bill', 'Ragnar', 'Ed', 'John', 'Jane' ];
-  static final List appellations = [
-    'Jackal', 'King', 'Red', 'Stalwart', 'Axe',
-    'Young', 'Brave', 'Eager', 'Wily', 'Zesty'];
+  static List<String> names = [];
+  static List<String> appellations = [];
   
   PirateName({String firstName, String appellation}) {
     if (firstName == null) {
@@ -92,4 +105,16 @@ class PirateName {
   
   // Another getter.
   String get jsonString => JSON.encode({"f": _firstName, "a": _appellation});
+  
+  static Future readyThePirates() {
+    var path = 'piratenames.json';
+    return HttpRequest.getString(path)
+        .then(_parsePirateNamesFromJSON);
+  }
+  
+  static _parsePirateNamesFromJSON(String jsonString) {
+    Map pirateNames = JSON.decode(jsonString);
+    names = pirateNames['names'];
+    appellations = pirateNames['appellations'];
+  }
 }
